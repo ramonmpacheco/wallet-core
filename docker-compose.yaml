@@ -1,0 +1,28 @@
+
+services:
+  app:
+    build:
+      context: .
+    container_name: wallet_core_app
+    ports:
+      - "8080:8080"
+    volumes:
+      - ".:/go/src/"
+    networks:
+      - my-eda
+  
+  mysql:
+    image: mysql:5.7
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wallet
+      MYSQL_PASSWORD: root
+    ports:
+      - 3306:3306
+    volumes:
+      - .docker/mysql:/var/lib/mysql
+
+networks:
+  my-eda:
+    driver: bridge
