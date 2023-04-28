@@ -1,4 +1,4 @@
-package createacount
+package createaccount
 
 import (
 	"github.com/ramonmpacheco/ms-wallet/internal/entity"

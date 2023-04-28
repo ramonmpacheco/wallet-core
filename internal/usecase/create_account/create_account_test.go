@@ -1,4 +1,4 @@
-package createacount
+package createaccount
 
 import (
 	"testing"
