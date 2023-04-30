@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/ramonmpacheco/ms-wallet/internal/entity"
 )
@@ -33,9 +34,11 @@ func (c *ClientDb) Get(id string) (*entity.Client, error) {
 func (c *ClientDb) Save(client *entity.Client) error {
 	stmt, err := c.DB.Prepare("INSERT INTO clients (id, name, email, created_at) VALUES (?,?,?,?)")
 	if err != nil {
+		log.Default().Printf("error creating query=%v", err)
 		return err
 	}
 	defer stmt.Close()
+	log.Default().Printf("client-db-save, init, client=%v", client)
 	_, err = stmt.Exec(client.ID, client.Name, client.Email, client.CreatedAt)
 	if err != nil {
 		return err

@@ -1,6 +1,7 @@
 package createclient
 
 import (
+	"log"
 	"time"
 
 	"github.com/ramonmpacheco/ms-wallet/internal/entity"
@@ -8,8 +9,8 @@ import (
 )
 
 type CreateClientInputDTO struct {
-	Name  string
-	Email string
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 type CreateClientOutputDTO struct {
@@ -35,11 +36,12 @@ func (ccud *CreateClientUseCase) Execute(input CreateClientInputDTO) (*CreateCli
 	if err != nil {
 		return nil, err
 	}
+	log.Default().Printf("create-client-use-case-execute, init, input=%s", input)
 	err = ccud.ClientGateway.Save(client)
 	if err != nil {
 		return nil, err
 	}
-
+	log.Default().Printf("create-client-use-case-execute, done, input=%s", input)
 	return &CreateClientOutputDTO{
 		ID:        client.ID,
 		Name:      client.Name,
