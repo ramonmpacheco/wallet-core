@@ -5,15 +5,18 @@ import (
 	"database/sql"
 	"fmt"
 
+	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/ramonmpacheco/ms-wallet/internal/database"
 	"github.com/ramonmpacheco/ms-wallet/internal/event"
+	"github.com/ramonmpacheco/ms-wallet/internal/event/handler"
 	createaccount "github.com/ramonmpacheco/ms-wallet/internal/usecase/create_account"
 	createclient "github.com/ramonmpacheco/ms-wallet/internal/usecase/create_client"
 	createtransaction "github.com/ramonmpacheco/ms-wallet/internal/usecase/create_transaction"
 	"github.com/ramonmpacheco/ms-wallet/internal/web"
 	"github.com/ramonmpacheco/ms-wallet/internal/web/server"
 	"github.com/ramonmpacheco/ms-wallet/pkg/events"
+	"github.com/ramonmpacheco/ms-wallet/pkg/kafka"
 	"github.com/ramonmpacheco/ms-wallet/pkg/uow"
 )
 
@@ -30,9 +33,16 @@ func main() {
 		panic(err)
 	}
 	defer db.Close()
+	configMap := ckafka.ConfigMap{
+		"bootstrap.servers": "kafka:29092",
+		"group.id":          "wallet",
+	}
+	kafkaProducer := kafka.NewKafkaProducer(&configMap)
+
 	eventDispatcher := events.NewEventDispatcher()
+	eventDispatcher.Register("TransactionCreated", handler.NewTransactionCreatedKafkaHandler(kafkaProducer))
 	transactionCreatedEvent := event.NewTRansactionCreated()
-	// eventDispatcher.Register("TransactionCreated", handler)
+
 	clientDb := database.NewClientDb(db)
 	accounttDb := database.NewAccountDb(db)
 
@@ -50,7 +60,7 @@ func main() {
 	createTransactionUseCase := createtransaction.NewCreateTransactionUseCase(
 		uow, eventDispatcher, transactionCreatedEvent,
 	)
-	webserver := server.NewWebServer(":3000")
+	webserver := server.NewWebServer(":8080")
 	clientHandler := web.NewWebClientHandler(*createClientUseCase)
 	accountHandler := web.NewWebAccountHandler(*createAccountUseCase)
 	transactionHandler := web.NewWebTransactionHandler(*createTransactionUseCase)
@@ -59,5 +69,6 @@ func main() {
 	webserver.AddHandler("/accounts", accountHandler.CreateAccount)
 	webserver.AddHandler("/transactions", transactionHandler.CreateTransaction)
 
+	fmt.Println("Server is running")
 	webserver.Start()
 }

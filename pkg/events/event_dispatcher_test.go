@@ -1,6 +1,7 @@
 package events
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -32,7 +33,7 @@ func (e *TestEvent) GetDateTime() time.Time {
 
 type TestEventHandler struct{ Id int }
 
-func (h *TestEventHandler) Handle(event EventInterface) {
+func (h *TestEventHandler) Handle(event EventInterface, wg *sync.WaitGroup) {
 
 }
 
@@ -143,8 +144,9 @@ type MockHandler struct {
 	mock.Mock
 }
 
-func (mh *MockHandler) Handle(event EventInterface) {
+func (mh *MockHandler) Handle(event EventInterface, wg *sync.WaitGroup) {
 	mh.Called(event)
+	wg.Done()
 }
 
 func (suite *EventDispatcherTestSuite) TestEventDispatch_Dispatch() {
