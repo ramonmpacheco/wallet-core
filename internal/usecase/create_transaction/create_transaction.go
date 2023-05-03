@@ -23,21 +23,31 @@ type CreateTransactionOutputDTO struct {
 	Amount        float64 `json:"amount"`
 }
 
+type BalanceUpdatedOutputDTO struct {
+	AccountIdFrom        string  `json:"account_id_from"`
+	AccountIdTo          string  `json:"account_id_to"`
+	BalanceAccountIdFrom float64 `json:"balance_account_id_from"`
+	BalanceAccountIdTo   float64 `json:"balance_account_id_to"`
+}
+
 type CreateTransactionUseCase struct {
 	Uow                uow.UowInterface
 	EventDispatcher    events.EventDispatcherInterface
 	TransactionCreated events.EventInterface
+	BalanceUpdated     events.EventInterface
 }
 
 func NewCreateTransactionUseCase(
 	Uow uow.UowInterface,
 	eventDispatcher events.EventDispatcherInterface,
 	transactionCreated events.EventInterface,
+	balanceUpdated events.EventInterface,
 ) *CreateTransactionUseCase {
 	return &CreateTransactionUseCase{
 		Uow:                Uow,
 		EventDispatcher:    eventDispatcher,
 		TransactionCreated: transactionCreated,
+		BalanceUpdated:     balanceUpdated,
 	}
 }
 
@@ -46,6 +56,7 @@ func (ctuc *CreateTransactionUseCase) Execute(
 ) (*CreateTransactionOutputDTO, error) {
 	log.Default().Printf("CreateTransactionUseCase-execute, init, input=%v", input)
 	output := &CreateTransactionOutputDTO{}
+	balanceUpdatedOutput := &BalanceUpdatedOutputDTO{}
 	err := ctuc.Uow.Do(ctx, func(_ *uow.Uow) error {
 		accountRepository := ctuc.getAccountRepository(ctx)
 		transactionRepository := ctuc.getTransactionRepository(ctx)
@@ -87,6 +98,11 @@ func (ctuc *CreateTransactionUseCase) Execute(
 		output.AccountIdFrom = input.AccountIdFrom
 		output.AccountIdTo = input.AccountIdTo
 		output.Amount = input.Amount
+
+		balanceUpdatedOutput.AccountIdFrom = input.AccountIdFrom
+		balanceUpdatedOutput.AccountIdTo = input.AccountIdTo
+		balanceUpdatedOutput.BalanceAccountIdFrom = accountFrom.Balance
+		balanceUpdatedOutput.BalanceAccountIdTo = accountTo.Balance
 		return nil
 	})
 	if err != nil {
@@ -95,6 +111,8 @@ func (ctuc *CreateTransactionUseCase) Execute(
 	}
 	ctuc.TransactionCreated.SetPayload(output)
 	ctuc.EventDispatcher.Dispatch(ctuc.TransactionCreated)
+	ctuc.BalanceUpdated.SetPayload(balanceUpdatedOutput)
+	ctuc.EventDispatcher.Dispatch(ctuc.BalanceUpdated)
 	return output, nil
 }
 

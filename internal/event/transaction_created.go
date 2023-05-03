@@ -7,7 +7,7 @@ type TransactionCreated struct {
 	Payload interface{}
 }
 
-func NewTRansactionCreated() *TransactionCreated {
+func NewTransactionCreated() *TransactionCreated {
 	return &TransactionCreated{
 		Name: "TransactionCreated",
 	}
