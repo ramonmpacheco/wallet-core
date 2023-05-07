@@ -8,7 +8,20 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - "./core:/app"
+      - "./core:/go/src"
+    networks:
+      - my-eda
+  
+  balancekeeper:
+    build: 
+      context: ./balance-keeper
+      dockerfile: docker/${CTX:-dev}/Dockerfile
+    platform: linux/amd64
+    container_name: balance_keeper_app
+    ports:
+      - "3003:3003"
+    volumes:
+      - "./balance-keeper:/go/src"
     networks:
       - my-eda
   
@@ -24,6 +37,21 @@ services:
     volumes:
       - ./core/.docker/mysql:/var/lib/mysql
       - ./core/container-seed/init:/docker-entrypoint-initdb.d
+    networks:
+      - my-eda
+
+  balancekeepermysql:
+    image: mysql:5.7
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: balances
+      MYSQL_PASSWORD: root
+    ports:
+      - 3307:3306
+    volumes:
+      - ./balance-keeper/.docker/mysql:/var/lib/mysql
+      # - ./core/container-seed/init:/docker-entrypoint-initdb.d
     networks:
       - my-eda
 
