@@ -5,6 +5,8 @@ services:
       context: ./core
     platform: linux/amd64
     container_name: wallet_core_app
+    depends_on:
+      - kafka
     ports:
       - "8080:8080"
     volumes:
@@ -18,6 +20,8 @@ services:
       dockerfile: docker/${CTX:-dev}/Dockerfile
     platform: linux/amd64
     container_name: balance_keeper_app
+    depends_on:
+      - kafka
     ports:
       - "3003:3003"
     volumes:
@@ -51,7 +55,7 @@ services:
       - 3307:3306
     volumes:
       - ./balance-keeper/.docker/mysql:/var/lib/mysql
-      # - ./core/container-seed/init:/docker-entrypoint-initdb.d
+      - ./balance-keeper/container-seed/init:/docker-entrypoint-initdb.d
     networks:
       - my-eda
 

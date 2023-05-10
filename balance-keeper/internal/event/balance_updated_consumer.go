@@ -2,19 +2,22 @@ package event
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 
 	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/ramonmpacheco/balance-keeper/internal/dto"
+	"github.com/ramonmpacheco/balance-keeper/internal/usecase"
 	"github.com/ramonmpacheco/balance-keeper/pkg/kafka"
 )
 
 type BalanceUpdatedConsumer struct {
+	UpdateBalanceUseCase usecase.UpdateBalanceUseCase
 }
 
-func NewBalanceUpdatedConsumer() *BalanceUpdatedConsumer {
-	return &BalanceUpdatedConsumer{}
+func NewBalanceUpdatedConsumer(UpdateBalanceUseCase usecase.UpdateBalanceUseCase) *BalanceUpdatedConsumer {
+	return &BalanceUpdatedConsumer{
+		UpdateBalanceUseCase: UpdateBalanceUseCase,
+	}
 }
 
 func (e *BalanceUpdatedConsumer) Exec() {
@@ -39,6 +42,6 @@ func (e *BalanceUpdatedConsumer) Exec() {
 		if err != nil {
 			log.Printf("Failed to unmarshal Kafka message: %v", err)
 		}
-		fmt.Printf("unmarshal: %v", eventValue)
+		e.UpdateBalanceUseCase.Execute(eventValue.Payload)
 	}
 }
