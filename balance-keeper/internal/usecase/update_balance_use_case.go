@@ -22,39 +22,44 @@ func NewUpdateBalanceUseCase(persistence db.BalanceDb) *UpdateBalanceUseCase {
 
 func (du *UpdateBalanceUseCase) Execute(bu dto.BalanceUpdatedDTO) {
 	log.Default().Printf("Init usecase: %v", bu)
-	fromEntity := entity.Balance{
-		Id:        uuid.New().String(),
-		AccountId: bu.AccountIdFrom,
-		Amount:    bu.BalanceAccountIdFrom,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	savedFrom, _ := du.Persistence.GetByAccountId(fromEntity.AccountId)
-	if savedFrom != nil {
-		savedFrom.Amount = fromEntity.Amount
-		savedFrom.UpdatedAt = time.Now()
-		du.Persistence.Update(savedFrom)
-	} else {
-		if err := du.Persistence.Save(&fromEntity); err != nil {
-			log.Default().Printf("error from persistence: %v", err)
-		}
-	}
-	toEntity := entity.Balance{
-		Id:        uuid.New().String(),
-		AccountId: bu.AccountIdTo,
-		Amount:    bu.BalanceAccountIdTo,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	savedTo, _ := du.Persistence.GetByAccountId(toEntity.AccountId)
-	if savedTo != nil {
-		savedTo.Amount = toEntity.Amount
-		savedTo.UpdatedAt = time.Now()
-		du.Persistence.Update(savedTo)
-	} else {
-		if err := du.Persistence.Save(&toEntity); err != nil {
-			log.Default().Printf("error from persistence: %v", err)
-		}
-	}
+	du.save(
+		du.getEntitiesFrom(bu),
+	)
+	log.Default().Printf("usecase done: %v", bu)
+}
 
+func (s *UpdateBalanceUseCase) save(entities []entity.Balance) {
+	for _, entity := range entities {
+		e, _ := s.Persistence.GetByAccountId(entity.AccountId)
+		if e != nil {
+			e.Amount = entity.Amount
+			e.UpdatedAt = time.Now()
+			s.Persistence.Update(e)
+			continue
+		}
+		if err := s.Persistence.Save(&entity); err != nil {
+			log.Default().Printf("error from persistence: %v", err)
+			continue
+		}
+		log.Default().Printf("persistence ok: %v", entity)
+	}
+}
+
+func (gef *UpdateBalanceUseCase) getEntitiesFrom(bu dto.BalanceUpdatedDTO) []entity.Balance {
+	return []entity.Balance{
+		{
+			Id:        uuid.New().String(),
+			AccountId: bu.AccountIdFrom,
+			Amount:    bu.BalanceAccountIdFrom,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		{
+			Id:        uuid.New().String(),
+			AccountId: bu.AccountIdTo,
+			Amount:    bu.BalanceAccountIdTo,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+	}
 }

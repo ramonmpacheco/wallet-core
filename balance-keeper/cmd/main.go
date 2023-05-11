@@ -28,10 +28,11 @@ func main() {
 	}
 	defer database.Close()
 	balanceDb := db.NewBalanceDb(database)
-	usecase := usecase.NewUpdateBalanceUseCase(*balanceDb)
-	go event.NewBalanceUpdatedConsumer(*usecase).Exec()
+	updateUsecase := usecase.NewUpdateBalanceUseCase(*balanceDb)
+	findUsecase := usecase.NewFindBalanceUseCase(*balanceDb)
+	go event.NewBalanceUpdatedConsumer(*updateUsecase).Exec()
 	webserver := server.NewWebServer(":3003")
-	balanceHandler := web.NewBalanceHandler()
+	balanceHandler := web.NewBalanceHandler(findUsecase)
 	webserver.AddHandler("/balances/{account_id}", balanceHandler.GetBalance)
 	webserver.Start()
 }
