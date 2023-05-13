@@ -3,6 +3,7 @@ services:
   app:
     build:
       context: ./core
+      dockerfile: docker/${CTX:-dev}/Dockerfile
     platform: linux/amd64
     container_name: wallet_core_app
     depends_on:
