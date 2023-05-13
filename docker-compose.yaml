@@ -103,6 +103,7 @@ services:
     container_name: control-center
     depends_on:
       - kafka
+      - zookeeper
     ports:
       - "9021:9021"
     environment:
@@ -112,6 +113,27 @@ services:
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
       CONFLUENT_METRICS_TOPIC_REPLICATION: 1
       PORT: 9021
+    networks:
+      - my-eda
+  
+  seed-kafka-topics:
+    image: confluentinc/cp-kafka:6.1.1
+    platform: linux/amd64
+    depends_on:
+      - kafka
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # blocks until kafka is reachable
+      kafka-topics --bootstrap-server kafka:29092 --list
+
+      echo -e 'Creating kafka topics'
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic transactions --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic balances --replication-factor 1 --partitions 1
+
+      echo -e 'Successfully created the following topics:'
+      kafka-topics --bootstrap-server kafka:29092 --list
+      "
     networks:
       - my-eda
 
